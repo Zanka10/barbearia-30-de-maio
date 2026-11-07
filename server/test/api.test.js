@@ -150,6 +150,22 @@ describe('agendamento online', () => {
     const n = one("SELECT COUNT(*) AS n FROM notifications WHERE type = 'appointment_created'").n;
     assert.ok(n >= 2);
   });
+
+  test('agendamento pelo site avisa TODOS os admins no painel e o barbeiro no painel e por e-mail', async () => {
+    const admin2 = run("INSERT INTO users (name, email, password_hash, role) VALUES ('Admin Dois', 'admin2@test.local', 'x', 'admin')").id;
+    const admin1 = one("SELECT id FROM users WHERE email = 'admin@test.local'").id;
+    const barberUser = one('SELECT user_id FROM staff WHERE id = ?', [barberA]).user_id;
+    // Mesmo com o navegador logado como administrador, quem agenda pelo site é o cliente
+    const r = await admin('POST', '/public/appointments', { serviceId, staffId: barberA, date, time: '17:00', name: 'Cliente Site', phone: '11944445555', consent: true });
+    assert.equal(r.status, 201);
+    const apptId = r.data.appointment.id;
+    const notified = (userId) => one("SELECT 1 AS x FROM notifications WHERE user_id = ? AND appointment_id = ? AND type = 'appointment_created'", [userId, apptId]);
+    assert.ok(notified(admin1), 'admin 1 notificado no painel');
+    assert.ok(notified(admin2), 'admin 2 notificado no painel');
+    assert.ok(notified(barberUser), 'barbeiro notificado no painel');
+    await new Promise((res) => setTimeout(res, 50)); // e-mails são enviados em segundo plano
+    assert.ok(one("SELECT 1 AS x FROM email_log WHERE to_address = 'a@test.local' AND subject LIKE '%Cliente Site%'"), 'barbeiro recebe e-mail');
+  });
 });
 
 describe('fluxo de atendimento e financeiro', () => {

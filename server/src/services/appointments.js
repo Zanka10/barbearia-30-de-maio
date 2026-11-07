@@ -159,7 +159,9 @@ export function createAppointment({ clientId, staffId, serviceId, date, startMin
       ],
     ).id;
   });
-  notifyAppointment('created', id, { actorUserId: actor?.id ?? null });
+  // Agendamento pelo site: avisa todos (admins + barbeiro), mesmo que o navegador esteja logado como alguém da equipe.
+  // Pelo painel: não avisa quem fez o agendamento (ele mesmo).
+  notifyAppointment('created', id, { actorUserId: source === 'online' ? null : (actor?.id ?? null) });
   return getAppointment(id);
 }
 
