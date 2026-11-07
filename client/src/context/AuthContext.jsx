@@ -27,8 +27,9 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:expired', onExpired);
   }, [refresh]);
 
-  const login = useCallback(async (identifier, password) => {
-    const { user } = await api.post('/auth/login', { identifier, password });
+  /** scope: 'client' (área do cliente) ou 'staff' (painel de gestão). */
+  const login = useCallback(async (identifier, password, scope) => {
+    const { user } = await api.post('/auth/login', { identifier, password, scope });
     setUser(user);
     return user;
   }, []);

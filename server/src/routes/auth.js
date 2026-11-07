@@ -40,8 +40,13 @@ function publicUser(id) {
 }
 
 router.post('/login', loginLimiter, async (req, res) => {
-  const { identifier, password } = parse(
-    z.object({ identifier: z.string().trim().min(3, 'Informe e-mail ou celular.').max(160), password: z.string().min(1, 'Informe a senha.').max(128) }),
+  const { identifier, password, scope } = parse(
+    z.object({
+      identifier: z.string().trim().min(3, 'Informe e-mail ou celular.').max(160),
+      password: z.string().min(1, 'Informe a senha.').max(128),
+      // Área de onde vem o login: 'client' (site) ou 'staff' (painel). Cada uma só aceita o próprio tipo de conta.
+      scope: z.enum(['client', 'staff']).optional(),
+    }),
     req.body,
   );
   const isEmail = identifier.includes('@');
@@ -63,6 +68,15 @@ router.post('/login', loginLimiter, async (req, res) => {
     throw unauthorized('Credenciais inválidas.');
   }
   if (!user.active) throw unauthorized('Usuário inativo. Procure o administrador.');
+
+  // Senha correta, mas conta de outra área: não cria sessão e orienta para o login certo.
+  const isStaff = user.role === 'admin' || user.role === 'barber';
+  if (scope === 'client' && isStaff) {
+    throw new AppError(403, 'Esta é a área do cliente. Funcionários devem entrar pelo painel de gestão.', { code: 'WRONG_AREA', details: { area: 'staff' } });
+  }
+  if (scope === 'staff' && !isStaff) {
+    throw new AppError(403, 'Acesso restrito à equipe da barbearia. Clientes devem entrar pela área do cliente.', { code: 'WRONG_AREA', details: { area: 'client' } });
+  }
 
   run('UPDATE users SET failed_logins = 0, locked_until = NULL, last_login_at = ? WHERE id = ?', [nowIso(), user.id]);
   const { token, expires } = createSession(user.id, req);

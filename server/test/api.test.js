@@ -220,6 +220,30 @@ describe('segurança e permissões', () => {
     assert.equal((await c('GET', '/clients')).status, 403);
   });
 
+  test('login separado: painel só aceita equipe e área do cliente só aceita clientes', async () => {
+    // Equipe tentando entrar pela área do cliente
+    let s = session();
+    let r = await s('POST', '/auth/login', { identifier: 'admin@test.local', password: 'admin12345', scope: 'client' });
+    assert.equal(r.status, 403);
+    assert.equal(r.data.error.code, 'WRONG_AREA');
+    assert.equal((await s('GET', '/auth/me')).data.user, null, 'não deve criar sessão');
+
+    // Cliente tentando entrar pelo painel
+    s = session();
+    r = await s('POST', '/auth/login', { identifier: '11988881111', password: 'senha1234', scope: 'staff' });
+    assert.equal(r.status, 403);
+    assert.equal(r.data.error.code, 'WRONG_AREA');
+    assert.equal((await s('GET', '/auth/me')).data.user, null, 'não deve criar sessão');
+
+    // Cada um pela sua área funciona
+    assert.equal((await session()('POST', '/auth/login', { identifier: 'admin@test.local', password: 'admin12345', scope: 'staff' })).status, 200);
+    assert.equal((await session()('POST', '/auth/login', { identifier: '11988881111', password: 'senha1234', scope: 'client' })).status, 200);
+
+    // Senha errada continua genérica (não revela o tipo de conta)
+    r = await session()('POST', '/auth/login', { identifier: 'admin@test.local', password: 'errada123', scope: 'client' });
+    assert.equal(r.status, 401);
+  });
+
   test('LGPD: exclusão de conta anonimiza dados pessoais', async () => {
     const c = session();
     await c('POST', '/auth/login', { identifier: '11988881111', password: 'senha1234' });

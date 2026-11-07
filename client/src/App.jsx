@@ -24,12 +24,14 @@ const Finance = lazy(() => import('./pages/panel/Finance.jsx'));
 const Notifications = lazy(() => import('./pages/panel/Notifications.jsx'));
 const Settings = lazy(() => import('./pages/panel/Settings.jsx'));
 const Profile = lazy(() => import('./pages/panel/Profile.jsx'));
+const StaffLogin = lazy(() => import('./pages/panel/StaffLogin.jsx'));
 
 function RequireRole({ roles, children }) {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return <Loading />;
-  if (!user) return <Navigate to="/entrar" replace state={{ from: location.pathname }} />;
+  // Painel: sem login vai para o login da equipe (separado da área do cliente)
+  if (!user) return <Navigate to="/painel/entrar" replace state={{ from: location.pathname }} />;
   if (!roles.includes(user.role)) return <Navigate to={user.role === 'client' ? '/minha-conta' : '/painel'} replace />;
   return children;
 }
@@ -79,6 +81,7 @@ export default function App() {
           />
         </Route>
 
+        <Route path="painel/entrar" element={<StaffLogin />} />
         <Route
           path="painel"
           element={

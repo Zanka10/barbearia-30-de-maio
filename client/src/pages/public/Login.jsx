@@ -13,18 +13,17 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  if (user) return <Navigate to={user.role === 'client' ? '/minha-conta' : '/painel'} replace />;
+  // Login exclusivo de clientes. A equipe entra por /painel/entrar.
+  if (user?.role === 'client') return <Navigate to="/minha-conta" replace />;
 
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      const u = await login(identifier.trim(), password);
+      await login(identifier.trim(), password, 'client');
       const from = location.state?.from;
-      const fallback = u.role === 'client' ? '/minha-conta' : '/painel';
-      const allowed = from && (u.role === 'client' ? from.startsWith('/minha-conta') : from.startsWith('/painel'));
-      navigate(allowed ? from : fallback, { replace: true });
+      navigate(from?.startsWith('/minha-conta') ? from : '/minha-conta', { replace: true });
     } catch (err) {
       setError(err);
     } finally {
@@ -38,7 +37,7 @@ export default function Login() {
         <div className="row">
           <BrandMark />
           <div>
-            <h1>Entrar</h1>
+            <h1>Área do cliente</h1>
             <p className="muted small">Acesse seus agendamentos e histórico</p>
           </div>
         </div>
@@ -60,6 +59,11 @@ export default function Login() {
           <input className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </Field>
         <ErrorBox error={error} />
+        {error?.code === 'WRONG_AREA' && (
+          <Link to="/painel/entrar" className="btn btn-outline btn-block">
+            Ir para o painel de gestão
+          </Link>
+        )}
         <button className="btn btn-primary btn-lg btn-block" disabled={busy}>
           <LogIn /> {busy ? 'Entrando...' : 'Entrar'}
         </button>

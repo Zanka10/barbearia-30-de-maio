@@ -101,7 +101,12 @@ export default function PublicLayout() {
           <div>
             © {new Date().getFullYear()} {s.shop_name}. Todos os direitos reservados.
           </div>
-          <Link to="/privacidade">Política de Privacidade (LGPD)</Link>
+          <div className="footer-links">
+            <Link to="/privacidade">Política de Privacidade (LGPD)</Link>
+            <Link to="/painel/entrar" className="staff-link">
+              Acesso da equipe
+            </Link>
+          </div>
         </div>
       </footer>
     </>

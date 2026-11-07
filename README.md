@@ -57,6 +57,13 @@ automaticamente.
 
 ## Perfis de acesso
 
+Os logins são separados — cada tela só aceita o seu tipo de conta (validado no backend):
+
+| Área | Endereço | Quem entra |
+|---|---|---|
+| Painel de gestão | `/painel/entrar` | Administradores e barbeiros |
+| Área do cliente | `/entrar` | Clientes |
+
 | Perfil | Acesso |
 |---|---|
 | **Administrador** | Tudo: dashboard financeiro, agenda de todos, clientes, funcionários, serviços, horários, financeiro, configurações, backups, auditoria |

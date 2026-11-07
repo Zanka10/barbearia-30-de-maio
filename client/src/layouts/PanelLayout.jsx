@@ -128,7 +128,7 @@ function Shell() {
             aria-label="Sair"
             onClick={async () => {
               await logout();
-              navigate('/entrar');
+              navigate('/painel/entrar');
             }}
           >
             <LogOut />
